@@ -32,14 +32,9 @@ def get_imgs(img_path, imsize, bbox=None,
     if transform is not None:
         img = transform(img)
 
-    ret = []
-    
-    #################################################
-    # TODO
-    # this part can be different, depending on which method is used
-    # Assert that ret[-1] is image with size 128x128
-    # ret = [normalize(img)]
-    #################################################
+    # ret = []
+    ret = [normalize(img)]
+
 
     return ret
 
@@ -51,6 +46,7 @@ class CUBDataset():
         self.split = split
         self.eval_mode = eval_mode
         self.for_wrong = for_wrong
+        self.embeddings_num = cfg.TEXT.CAPTIONS_PER_IMAGE
         
         self.norm = transforms.Compose([
             transforms.ToTensor(),
@@ -358,7 +354,13 @@ class CUBDataset():
                 gen_imgs = get_imgs(gen_img_name, self.imsize, bbox=None, transform=self.transform, normalize=self.norm)
                 data['gen_img'] = gen_imgs
 
-        return data
+        # second sentence
+        sent_ix = random.randint(0, self.embeddings_num)
+        new_sent_ix = index * self.embeddings_num + sent_ix
+        caps_two, cap_len_two = self.get_caption(new_sent_ix)
+
+        # return data
+        return imgs, caps, cap_len, cls_id, key, caps_two, cap_len_two
 
 
     def __len__(self):
