@@ -43,7 +43,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 from inception.slim import ops
 from inception.slim import scopes
