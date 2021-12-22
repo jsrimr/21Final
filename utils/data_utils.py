@@ -355,8 +355,8 @@ class CUBDataset():
                 data['gen_img'] = gen_imgs
 
         # second sentence
-        sent_ix = random.randint(0, self.embeddings_num)
-        new_sent_ix = index * self.embeddings_num + sent_ix
+        sent_ix = random.randint(0, cfg.TEXT.CAPTIONS_PER_IMAGE-1) # caption index
+        new_sent_ix = index * cfg.TEXT.CAPTIONS_PER_IMAGE + sent_ix
         caps_two, cap_len_two = self.get_caption(new_sent_ix)
 
         # return data
