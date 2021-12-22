@@ -337,6 +337,13 @@ class CUBDataset():
             # this part can be different, depending on which method is used
             # data[''] = ...
             #################################################
+                # second sentence
+            sent_ix = random.randint(0, cfg.TEXT.CAPTIONS_PER_IMAGE-1) # caption index
+            new_sent_ix = index * cfg.TEXT.CAPTIONS_PER_IMAGE + sent_ix
+            caps_two, cap_len_two = self.get_caption(new_sent_ix)
+
+            # return data
+            return imgs, caps, cap_len, cls_id, key, caps_two, cap_len_two
 
         else:
             key = self.filenames[index//cfg.TEXT.CAPTIONS_PER_IMAGE] # 002.Laysan_Albatross/Laysan_Albatross_0002_1027
@@ -354,13 +361,10 @@ class CUBDataset():
                 gen_imgs = get_imgs(gen_img_name, self.imsize, bbox=None, transform=self.transform, normalize=self.norm)
                 data['gen_img'] = gen_imgs
 
-        # second sentence
-        sent_ix = random.randint(0, cfg.TEXT.CAPTIONS_PER_IMAGE-1) # caption index
-        new_sent_ix = index * cfg.TEXT.CAPTIONS_PER_IMAGE + sent_ix
-        caps_two, cap_len_two = self.get_caption(new_sent_ix)
+            # return caps, cap_len, cls_id, key, sent_ix
+            return data
 
-        # return data
-        return imgs, caps, cap_len, cls_id, key, caps_two, cap_len_two
+        
 
 
     def __len__(self):

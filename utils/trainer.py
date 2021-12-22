@@ -527,26 +527,42 @@ class trainer(object):
             self.text_encoder = self.text_encoder.cuda()
             self.netG = self.netG.cuda()
             noise = noise.cuda()
-
+            
+        # for key in data_dic:
         for step, data in enumerate(self.test_dataloader, 0):
-            imgs, captions, cap_lens, class_ids, keys, sent_idx = self.prepare_data(
-                data)
+            # save_dir = '%s/%s' % (s_tmp, key)
+            captions = data['caps']
+            captions_lens = data['cap_len']
+            class_ids = data['cls_id']
+            keys = data['key']
+            sent_idx = data['sent_ix']
+            sorted_cap_lens, sorted_cap_indices = torch.sort(captions_lens, 0, True)
 
-            #################################################
-            # TODO
-            # word embedding might be returned as well
-            # hidden = self.text_encoder.init_hidden(self.batch_size)
-            # sent_emb = self.text_encoder(captions, cap_lens, hidden)
-            # sent_emb = sent_emb.detach()
-            #################################################
+            captions = captions[sorted_cap_indices].squeeze()
+            class_ids = class_ids[sorted_cap_indices].numpy()
+            keys = [keys[i] for i in sorted_cap_indices.numpy()]
+
+            if cfg.CUDA:
+                captions = captions.cuda()
+                sorted_cap_lens = sorted_cap_lens.cuda()
+            # else:
+            #     captions = Variable(captions)
+            #     sorted_cap_lens = Variable(sorted_cap_lens)
+
+            #######################################################
+            # (1) Extract text embeddings
+            ######################################################
+            hidden = self.text_encoder.init_hidden(self.batch_size)
+            # words_embs: batch_size x nef x seq_len
+            # sent_emb: batch_size x nef
+            words_embs, sent_emb = self.text_encoder(captions, sorted_cap_lens, hidden)
+            mask = (captions == 0)
+            #######################################################
+            # (2) Generate fake images
+            ######################################################
             noise.data.normal_(0, 1)
-
-            #################################################
-            # TODO
-            # this part can be different, depending on which algorithm is used
-            # the main purpose is generating synthetic images using caption embedding and latent vector (noise)
-            # fake_img = self.netG(noise, sent_emb, ...)
-            #################################################
+            fake_imgs, attention_maps, _, _ = self.netG(noise, sent_emb, words_embs, mask)
+            fake_imgs = fake_imgs[0]
 
             for j in range(self.batch_size):
                 if not os.path.exists(os.path.join(cfg.TEST.GENERATED_TEST_IMAGES, keys[j].split('/')[0])):
@@ -562,14 +578,3 @@ class trainer(object):
                       keys[j] + '_{}.png'.format(sent_idx[j])))
                 im.save(os.path.join(cfg.TEST.GENERATED_TEST_IMAGES,
                         keys[j] + '_{}.png'.format(sent_idx[j])))
-
-    # def save_model(self):
-    #     """
-    #     Saves models
-    #     """
-    #     torch.save(self.netG.state_dict(), os.path.join(
-    #         cfg.CHECKPOINT_DIR, cfg.TRAIN.GENERATOR))
-    #     torch.save(self.text_encoder.state_dict(), os.path.join(
-    #         cfg.CHECKPOINT_DIR, cfg.TRAIN.RNN_ENCODER))
-    #     torch.save(self.image_encoder.state_dict(), os.path.join(
-    #         cfg.CHECKPOINT_DIR, cfg.TRAIN.CNN_ENCODER))

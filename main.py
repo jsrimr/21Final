@@ -14,7 +14,8 @@ from utils.data_utils import CUBDataset
 from utils.trainer import trainer
 
 # Set a config file as 'train_birds.yml' in training, as 'eval_birds.yml' for evaluation
-cfg_from_file('cfg/train_birds.yml') # eval_birds.yml
+# cfg_from_file('cfg/train_birds.yml') # eval_birds.yml
+cfg_from_file('cfg/eval_birds.yml') # eval_birds.yml
 
 os.environ['CUDA_VISIBLE_DEVICES'] = cfg.GPU_ID
 
@@ -35,7 +36,7 @@ train_dataloader = torch.utils.data.DataLoader(train_dataset, batch_size=cfg.BAT
         drop_last=True, shuffle=True, num_workers=int(cfg.WORKERS))
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=cfg.BATCH_SIZE,
         drop_last=True, shuffle=False, num_workers=int(cfg.WORKERS))
-
+        
 
 if __name__ == "__main__":
     # algo = trainer(output_dir, train_dataset, train_dataloader, test_dataset, test_dataloader)
