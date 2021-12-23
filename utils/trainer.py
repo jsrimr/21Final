@@ -448,10 +448,10 @@ class trainer(object):
                 cnn_code_2 = l2norm(cnn_code_2, dim=1)
 
                 # TODO : contrastive_loss 없이 학습시킨 결과를 report 에 포함시키기
-                contrative_loss = criterion(cnn_code, cnn_code_2)
-                total_contra_loss += contrative_loss * 0.2
-                G_logs += 'contrative_loss: %.2f ' % total_contra_loss.item()
-                errG_total += total_contra_loss
+                # contrative_loss = criterion(cnn_code, cnn_code_2)
+                # total_contra_loss += contrative_loss * 0.2
+                # G_logs += 'contrative_loss: %.2f ' % total_contra_loss.item()
+                # errG_total += total_contra_loss
                 # backward and update parameters
                 errG_total.backward()
                 optimizerG.step()
@@ -499,7 +499,7 @@ class trainer(object):
         self.save_model(netG, avg_param_G, netsD, self.max_epoch)
         #################################################
 
-    def generate_eval_data(self):
+    def generate_eval_data(self, testloader):
         # load the text encoder model to generate images for evaluation
         self.text_encoder = RNN_ENCODER(
             self.n_words, nhidden=cfg.TEXT.EMBEDDING_DIM)
@@ -529,7 +529,7 @@ class trainer(object):
             noise = noise.cuda()
             
         # for key in data_dic:
-        for step, data in enumerate(self.test_dataloader, 0):
+        for step, data in enumerate(testloader, 0):
             # save_dir = '%s/%s' % (s_tmp, key)
             captions = data['caps']
             captions_lens = data['cap_len']

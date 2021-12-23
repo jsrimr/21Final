@@ -45,4 +45,4 @@ if __name__ == "__main__":
     if cfg.TRAIN.FLAG:
         algo.train()
     else:
-        algo.generate_eval_data()
+        algo.generate_eval_data(test_dataloader)
