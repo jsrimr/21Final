@@ -557,6 +557,11 @@ class trainer(object):
             # sent_emb: batch_size x nef
             words_embs, sent_emb = self.text_encoder(captions, sorted_cap_lens, hidden)
             mask = (captions == 0)
+
+            # 과연!
+            num_words = words_embs.size(2)
+            if mask.size(1) > num_words:
+                mask = mask[:, :num_words]
             #######################################################
             # (2) Generate fake images
             ######################################################
