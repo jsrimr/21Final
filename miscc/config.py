@@ -60,6 +60,17 @@ __C.TRAIN.SMOOTH.GAMMA1 = 0.0
 __C.TRAIN.SMOOTH.GAMMA3 = 0.0
 __C.TRAIN.SMOOTH.GAMMA2 = 0.0
 __C.TRAIN.SMOOTH.LAMBDA = 0.0
+__C.TRAIN.SMOOTH.LAMBDA1 = 1.0
+
+
+# Caption_model_settings added by tingting
+__C.CAP = edict()
+__C.CAP.embed_size = 256
+__C.CAP.hidden_size = 512
+__C.CAP.num_layers = 1
+__C.CAP.learning_rate = 0.001
+__C.CAP.caption_cnn_path = ''
+__C.CAP.caption_rnn_path = ''
 
 # Modal options
 

@@ -22,7 +22,7 @@ import time
 # DO NOT CHANGE
 from utils.model import RNN_ENCODER, CNN_ENCODER, GENERATOR, DISCRIMINATOR
 #################################################
-
+from utils.model import CAPTION_CNN, CAPTION_RNN
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -167,6 +167,21 @@ class trainer(object):
         print('Load text encoder from:', cfg.TRAIN.RNN_ENCODER)
         text_encoder.eval()
 
+         # Caption models - cnn_encoder and rnn_decoder
+        caption_cnn = CAPTION_CNN(cfg.CAP.embed_size)
+        caption_cnn.load_state_dict(torch.load(cfg.CAP.caption_cnn_path, map_location=lambda storage, loc: storage))
+        for p in caption_cnn.parameters():
+            p.requires_grad = False
+        print('Load caption model from:', cfg.CAP.caption_cnn_path)
+        caption_cnn.eval()
+
+        # caption_rnn = CAPTION_RNN(cfg.CAP.embed_size, cfg.CAP.hidden_size * 2, self.n_words, cfg.CAP.num_layers)
+        caption_rnn = CAPTION_RNN(cfg.CAP.embed_size, cfg.CAP.hidden_size * 2, 9956, cfg.CAP.num_layers)
+        caption_rnn.load_state_dict(torch.load(cfg.CAP.caption_rnn_path, map_location=lambda storage, loc: storage))
+        for p in caption_rnn.parameters():
+            p.requires_grad = False
+        print('Load caption model from:', cfg.CAP.caption_rnn_path)
+        #caption_rnn.eval()
         # #######################generator and discriminators############## #
 
         # if cfg.GAN.B_DCGAN:
@@ -219,10 +234,15 @@ class trainer(object):
         if cfg.CUDA:
             text_encoder = text_encoder.cuda()
             image_encoder = image_encoder.cuda()
+            caption_cnn = caption_cnn.cuda()
+            caption_rnn = caption_rnn.cuda()
             netG.cuda()
             for i in range(len(netsD)):
                 netsD[i].cuda()
-        return [text_encoder, image_encoder, netG, netsD, epoch]
+
+
+        # return [text_encoder, image_encoder, netG, netsD, epoch]
+        return [text_encoder, image_encoder, caption_cnn, caption_rnn, netG, netsD, epoch]
 
     def define_optimizers(self, netG, netsD):
         optimizersD = []
@@ -318,7 +338,8 @@ class trainer(object):
                       x = self.prepare_data()
                       .....
         """
-        text_encoder, image_encoder, netG, netsD, start_epoch = self.build_models()
+        # text_encoder, image_encoder, netG, netsD, start_epoch = self.build_models()
+        text_encoder, image_encoder, caption_cnn, caption_rnn, netG, netsD, start_epoch = self.build_models()
         avg_param_G = copy_G_params(netG)
         optimizerG, optimizersD = self.define_optimizers(netG, netsD)
         real_labels, fake_labels, match_labels = self.prepare_labels()
@@ -420,16 +441,25 @@ class trainer(object):
                 # do not need to compute gradient for Ds
                 # self.set_requires_grad_value(netsD, False)
                 netG.zero_grad()
+                # errG_total, G_logs, cnn_code = \
+                #     generator_loss(netsD, image_encoder, fake_imgs, real_labels,
+                #                    words_embs, sent_emb, match_labels, cap_lens, class_ids)
                 errG_total, G_logs, cnn_code = \
-                    generator_loss(netsD, image_encoder, fake_imgs, real_labels,
+                    generator_loss(netsD, image_encoder, caption_cnn, caption_rnn, captions, fake_imgs, real_labels,
                                    words_embs, sent_emb, match_labels, cap_lens, class_ids)
                 kl_loss = KL_loss(mu, logvar)
                 errG_total += kl_loss
                 G_logs += 'kl_loss: %.2f ' % kl_loss.item()
 
+                # errG_total_2, G_logs_2, cnn_code_2 = \
+                #     generator_loss(netsD, image_encoder, fake_imgs_2, real_labels_2,
+                #                    words_embs_2, sent_emb_2, match_labels_2, cap_lens_2, class_ids_2)
+
                 errG_total_2, G_logs_2, cnn_code_2 = \
-                    generator_loss(netsD, image_encoder, fake_imgs_2, real_labels_2,
+                    generator_loss(netsD, image_encoder, caption_cnn, caption_rnn, captions_2, fake_imgs_2, real_labels_2,
                                    words_embs_2, sent_emb_2, match_labels_2, cap_lens_2, class_ids_2)
+
+
                 kl_loss_2 = KL_loss(mu_2, logvar_2)
                 errG_total_2 += kl_loss_2
                 G_logs_2 += 'kl_loss: %.2f ' % kl_loss_2.item()

@@ -5,6 +5,7 @@ import numpy as np
 from miscc.config import cfg
 
 from utils.GlobalAttention import func_attention
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
 def cosine_similarity(x1, x2, dim=1, eps=1e-8):
@@ -165,7 +166,13 @@ def discriminator_loss(netD, real_imgs, fake_imgs, conditions,
     return errD
 
 
-def generator_loss(netsD, image_encoder, fake_imgs, real_labels,
+def caption_loss(cap_output, captions):
+    criterion = nn.CrossEntropyLoss()
+    caption_loss = criterion(cap_output, captions)
+    return caption_loss
+
+
+def generator_loss(netsD, image_encoder, caption_cnn, caption_rnn, captions, fake_imgs, real_labels,
                    words_embs, sent_emb, match_labels,
                    cap_lens, class_ids):
     numDs = len(netsD)
@@ -207,6 +214,16 @@ def generator_loss(netsD, image_encoder, fake_imgs, real_labels,
 
             errG_total += w_loss + s_loss
             logs += 'w_loss: %.2f s_loss: %.2f ' % (w_loss.item(), s_loss.item())
+
+            fakeimg_feature = caption_cnn(fake_imgs[i])
+            #captions.cuda()
+            target_cap = pack_padded_sequence(captions, cap_lens.data.tolist(), batch_first=True)[0].cuda()
+            cap_output = caption_rnn(fakeimg_feature, captions, cap_lens.data.tolist())
+            cap_loss = caption_loss(cap_output, target_cap) * cfg.TRAIN.SMOOTH.LAMBDA1
+
+            errG_total += cap_loss
+            logs += 'cap_loss: %.2f, ' % cap_loss
+
     return errG_total, logs, cnn_code
 
 
