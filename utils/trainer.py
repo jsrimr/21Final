@@ -529,7 +529,7 @@ class trainer(object):
         self.save_model(netG, avg_param_G, netsD, self.max_epoch)
         #################################################
 
-    def generate_eval_data(self):
+    def generate_eval_data(self, test_dataloader):
         # load the text encoder model to generate images for evaluation
         self.text_encoder = RNN_ENCODER(
             self.n_words, nhidden=cfg.TEXT.EMBEDDING_DIM)
@@ -559,7 +559,7 @@ class trainer(object):
             noise = noise.cuda()
             
         # for key in data_dic:
-        for step, data in enumerate(self.test_dataloader, 0):
+        for step, data in enumerate(test_dataloader, 0):
             # save_dir = '%s/%s' % (s_tmp, key)
             captions = data['caps']
             captions_lens = data['cap_len']
